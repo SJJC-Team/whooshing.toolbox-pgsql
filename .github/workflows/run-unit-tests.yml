@@ -130,6 +130,13 @@ jobs:
     container: ${{ matrix.swift-config.image }}
     timeout-minutes: 60
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Check out code
         if: ${{ matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing }}
         uses: actions/checkout@v4
@@ -173,6 +180,13 @@ jobs:
     runs-on: ${{ matrix.macos-version }}
     timeout-minutes: 60
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Select appropriate Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -222,6 +236,13 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       # https://github.com/compnerd/cassowary/pull/27
       - name: Configure dev environment
         uses: compnerd/gha-setup-vsdevenv@main
@@ -243,6 +264,13 @@ jobs:
     if: ${{ !(github.event.pull_request.draft || false) && inputs.ios_scheme_name != '' }}
     runs-on: macos-15
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Select appropriate Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -258,6 +286,13 @@ jobs:
     container: swift:noble
     timeout-minutes: 5
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Configure git
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - name: Check out code
@@ -281,6 +316,13 @@ jobs:
     container: swift:noble
     timeout-minutes: 30
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Check out code
         uses: actions/checkout@v4
       - name: Install SDK
@@ -298,6 +340,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Check out code
         uses: actions/checkout@v4
       - name: Run unit tests
