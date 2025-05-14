@@ -140,18 +140,19 @@ jobs:
         uses: vapor/ci/.github/actions/check-compatible-swift@main
         with:
           package_root: ${{ inputs.package_root }}
-      - name: Setup PostgreSQL
-        uses: Harmon758/postgresql-action@v1.0.0
-        with:
-          postgresql version: 17.2
-          postgresql db: testing
-          postgresql user: testing
-          postgresql password: testing
-          postgresql port: 5432
       - name: Run unit tests
         if: ${{ steps.swift-check.outputs.swift-compatible == 'true' && (matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing) }}
         run: |
-          swift test
+          SWIFT_DETERMINISTIC_HASHING=1 \
+          swift build \
+            -c ${{ matrix.swift-config.build-mode }} \
+            ${WITH_TESTING} \
+            ${PACKAGE_ROOT} \
+            ${WITH_TSAN} \
+            ${WARNINGS_AS_ERRORS} \
+            ${WITH_COVERAGE} \
+            ${TEST_FILTER} \
+            ${EXTRA_FLAGS}
       - name: Upload coverage data
         if: ${{ inputs.with_coverage && (steps.swift-check.outputs.swift-compatible == 'true') && (matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing) }}
         uses: vapor/swift-codecov-action@v0.3
@@ -214,21 +215,6 @@ jobs:
           - { swift-version: 6.1, swift-branch: swift-6.1-release, swift-tag: 6.1-RELEASE }
     runs-on: windows-latest
     timeout-minutes: 60
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-          POSTGRES_HOST: localhost
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       # https://github.com/compnerd/cassowary/pull/27
       - name: Configure dev environment
@@ -306,13 +292,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Setup PostgreSQL
-        uses: Harmon758/postgresql-action@v1.0.0
-        with:
-          postgresql version: 17.2
-          postgresql db: testing
-          postgresql user: testing
-          postgresql password: testing
       - name: Check out code
         uses: actions/checkout@v4
       - name: Run unit tests
