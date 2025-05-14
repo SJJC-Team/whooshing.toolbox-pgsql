@@ -131,13 +131,6 @@ jobs:
     container: ${{ matrix.swift-config.image }}
     timeout-minutes: 60
     steps:
-      - name: Setup PostgreSQL
-        uses: Harmon758/postgresql-action@v1.0.0
-        with:
-          postgresql version: 17.2
-          postgresql db: testing
-          postgresql user: testing
-          postgresql password: testing
       - name: Check out code
         if: ${{ matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing }}
         uses: actions/checkout@v4
@@ -147,6 +140,14 @@ jobs:
         uses: vapor/ci/.github/actions/check-compatible-swift@main
         with:
           package_root: ${{ inputs.package_root }}
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
+          postgresql port: 5432
       - name: Run unit tests
         if: ${{ steps.swift-check.outputs.swift-compatible == 'true' && (matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing) }}
         run: |
