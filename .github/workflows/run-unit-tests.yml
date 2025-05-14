@@ -137,6 +137,7 @@ jobs:
           POSTGRES_DB: testing
           POSTGRES_USER: testing
           POSTGRES_PASSWORD: testing
+          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
         options: >-
@@ -194,6 +195,7 @@ jobs:
           POSTGRES_DB: testing
           POSTGRES_USER: testing
           POSTGRES_PASSWORD: testing
+          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
         options: >-
@@ -257,6 +259,7 @@ jobs:
           POSTGRES_DB: testing
           POSTGRES_USER: testing
           POSTGRES_PASSWORD: testing
+          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
         options: >-
@@ -292,6 +295,7 @@ jobs:
           POSTGRES_DB: testing
           POSTGRES_USER: testing
           POSTGRES_PASSWORD: testing
+          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
         options: >-
@@ -321,6 +325,7 @@ jobs:
           POSTGRES_DB: testing
           POSTGRES_USER: testing
           POSTGRES_PASSWORD: testing
+          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
         options: >-
@@ -351,20 +356,6 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:noble
     timeout-minutes: 30
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Check out code
         uses: actions/checkout@v4
