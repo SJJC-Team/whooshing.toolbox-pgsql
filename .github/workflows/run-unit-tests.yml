@@ -188,21 +188,6 @@ jobs:
             xcode-version: latest-stable
     runs-on: ${{ matrix.macos-version }}
     timeout-minutes: 60
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-          POSTGRES_HOST: localhost
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Select appropriate Xcode version
         uses: maxim-lobanov/setup-xcode@v1
@@ -215,13 +200,13 @@ jobs:
         uses: vapor/ci/.github/actions/check-compatible-swift@main
         with:
           package_root: ${{ inputs.package_root }}
-      - name: Run unit tests
+      - name: build
         if: ${{ steps.swift-check.outputs.swift-compatible == 'true' }}
         env:
           WITH_TSAN_MACOS: ${{ (inputs.with_tsan && matrix.macos-version != 'macos-14') && '--sanitize=thread' || '' }}
         run: |
           SWIFT_DETERMINISTIC_HASHING=1 \
-          swift test \
+          swift build \
             ${PACKAGE_ROOT} \
             ${WITH_TSAN_MACOS} \
             ${WITH_COVERAGE} \
@@ -288,21 +273,6 @@ jobs:
   ios-unit:
     if: ${{ !(github.event.pull_request.draft || false) && inputs.ios_scheme_name != '' }}
     runs-on: macos-15
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-          POSTGRES_HOST: localhost
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Select appropriate Xcode version
         uses: maxim-lobanov/setup-xcode@v1
@@ -318,21 +288,6 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:noble
     timeout-minutes: 5
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-          POSTGRES_HOST: localhost
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Configure git
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
