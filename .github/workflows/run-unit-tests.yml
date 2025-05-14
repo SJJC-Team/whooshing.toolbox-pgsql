@@ -130,22 +130,14 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.swift-config.image }}
     timeout-minutes: 60
-    services:
-      postgres:
-        image: postgres:17.2
-        env:
-          POSTGRES_DB: testing
-          POSTGRES_USER: testing
-          POSTGRES_PASSWORD: testing
-          POSTGRES_HOST: localhost
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql version: 17.2
+          postgresql db: testing
+          postgresql user: testing
+          postgresql password: testing
       - name: Check out code
         if: ${{ matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing }}
         uses: actions/checkout@v4
