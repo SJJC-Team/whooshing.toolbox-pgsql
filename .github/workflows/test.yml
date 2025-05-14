@@ -42,4 +42,4 @@ jobs:
       - name: Check out Vapor
         uses: actions/checkout@v4
       - name: Run tests
-        run: swift build --parallel
+        run: swift build
