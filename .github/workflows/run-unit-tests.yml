@@ -153,13 +153,6 @@ jobs:
             ${WITH_COVERAGE} \
             ${TEST_FILTER} \
             ${EXTRA_FLAGS}
-      - name: Upload coverage data
-        if: ${{ inputs.with_coverage && (steps.swift-check.outputs.swift-compatible == 'true') && (matrix.swift-config.build-mode == 'debug' || inputs.with_release_mode_testing) }}
-        uses: vapor/swift-codecov-action@v0.3
-        with:
-          codecov_token:    ${{ secrets.CODECOV_TOKEN || '' }}
-          package_path:     ${{ inputs.package_root }}
-          build_parameters: -c ${{ matrix.swift-config.build-mode }} ${{ inputs.extra_flags }}
 
   macos-unit:
     if: ${{ !(github.event.pull_request.draft || false) }}
