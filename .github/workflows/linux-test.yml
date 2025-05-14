@@ -1,4 +1,4 @@
-name: Swift
+name: linux-test(swift:6.0-jammy, debug)
 
 on:
   push:
