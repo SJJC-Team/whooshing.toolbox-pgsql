@@ -19,11 +19,39 @@ jobs:
       ios_xcodebuild_action: ''
       ios_scheme_name: whooshing.toolbox-pgsql
     secrets: inherit
+    services:
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: testing
+          POSTGRES_PASSWORD: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
   test-parallel:
     if: ${{ !(github.event.pull_request.draft || false) }}
     runs-on: ubuntu-latest
     container: swift:6.0
+    services:
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: testing
+          POSTGRES_PASSWORD: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out Vapor
         uses: actions/checkout@v4
