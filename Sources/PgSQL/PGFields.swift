@@ -11,8 +11,8 @@ import ErrorHandle
     创建一个结构体，并实现该协议，列出所有的字段。以下示例列出了 5 个字段，分别是 "id", "email", "age", "create_at", "update_at"，并为其详细配置了参数
     ```
     struct Fields: PGFields {
-        // id 索引字段，每个表中都应当有
-        let id = PGField("id", .uuid)
+        // 该字段将作为该表的主键，建议每个表都创建至少一个主键
+        let id = PGField("id", .uuid).primary
         // 设置了默认值 null@null.com 并非空
         let email = PGField("email", .string).cons([.sql(.default("null@null.com")), .required])
         // 设置了默认值 30，且唯一(不允许重复)

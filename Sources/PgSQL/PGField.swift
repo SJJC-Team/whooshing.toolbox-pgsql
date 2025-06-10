@@ -34,7 +34,8 @@ import FluentPostgresDriver
         static let name = "users"
         
         struct Fields: PGFields {
-            let id = PGField("id", .uuid)
+            // 该字段将作为该表的主键，建议每个表都创建至少一个主键
+            let id = PGField("id", .uuid).primary
             let email = PGField("email", .string)
             // 建立外键关系
             let foreign = PGField("foreign", .uuid).foreign(Role.self, Role.fields.id)
@@ -92,9 +93,9 @@ extension PGField {
     /// 为字段设置一个必须约束，表示该字段不可为 null
     public var required: Self { self.cons([.required]) }
     /// 为字段设置一个唯一约束，表示该字段不可重复
-    public var unique: Self { .init(self, unique: true) }
+    public var unique: Self { .init(self, unique: true, primary: self.isPrimary) }
     /// 将该字段设置为主键之一
-    public var primary: Self { .init(self, primary: true) }
+    public var primary: Self { .init(self, unique: false, primary: true) }
     
     /// 为字段设置默认值
     ///
@@ -175,23 +176,11 @@ extension PGField {
 }
 
 internal extension PGField {
-    init(_ s: Self, unique: Bool) {
+    init(_ s: Self, unique: Bool, primary: Bool) {
         self = Self(
             name: s.name,
             dataType: s.dataType,
             isUnique: unique,
-            isPrimary: s.isPrimary,
-            defaultValue: s.defaultValue,
-            foreigns: s.foreigns,
-            constraints: s.constraints
-        )
-    }
-    
-    init(_ s: Self, primary: Bool) {
-        self = Self(
-            name: s.name,
-            dataType: s.dataType,
-            isUnique: s.isUnique,
             isPrimary: primary,
             defaultValue: s.defaultValue,
             foreigns: s.foreigns,

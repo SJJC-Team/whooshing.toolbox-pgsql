@@ -17,7 +17,8 @@ import FluentPostgresDriver
 
         // 定义该表的所有字段信息，详见 PGFields 协议
         struct Fields: PGFields {
-            let id = PGField("id", .uuid)
+            // 该字段将作为该表的主键，建议每个表都创建至少一个主键
+            let id = PGField("id", .uuid).primary
             let email = PGField("email", .string).cons([.sql(.default("null@null.com")), .required])
             let age = PGField("age", .int, true).def(30)
             let createdAt = PGField("create_at", .string, true)
@@ -33,11 +34,9 @@ import FluentPostgresDriver
         // 将数据库表 users 中的 age 字段绑定到该模型的 age 属性
         @Field(fields.age)                                              var age: Int?
         // 将数据库表 users 中的 create_at 字段绑定到该模型的 createAt 属性
-        @Timestamp(fields.createdAt, on: .create,
-                format: .iso8601(withMilliseconds: true))               var createdAt: Date?
+        @Timestamp(fields.createdAt, on: .create)                       var createdAt: Date?
         // 将数据库表 users 中的 update_at 字段绑定到该模型的 updateAt 属性
-        @Timestamp(fields.updateAt, on: .update,
-                format: .iso8601(withMilliseconds: true))               var updatedAt: Date?
+        @Timestamp(fields.updateAt, on: .update)                        var updatedAt: Date?
         
         // 数据库表结构生成和迁移，负责与数据库交互，进行表创建，迁移，恢复等等交涉
         // 你需要确保 typealias DataModel = User 中，DataModel 正确地指向你的表数据模块
