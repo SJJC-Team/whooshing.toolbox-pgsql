@@ -35,9 +35,9 @@ struct PGSQLTests {
         }
     }
     
-    @Test("测试 PGFieldParam 初始化")
-    func testPGFieldParamInitialization() {
-        let param = PGFieldParam("email", .string, true)
+    @Test("测试 PGField 初始化")
+    func testPGFieldInitialization() {
+        let param = PGField("email", .string, true)
         #expect(param.name == "email")
         #expect(param.isUnique == true)
     }
@@ -137,15 +137,12 @@ final class User: PGModel, @unchecked Sendable {
     static let name = "users"
     
     struct Fields: PGFields {
-        static let tdeEncrypt: Bool = false
-        let id = PGField("id", .uuid)
+        let id = PGField("id", .uuid).primary
         let email = PGField("email", .string).cons([.sql(.default("null@null.com")), .required])
         let age = PGField("age", .int, true).def(30)
         let createdAt = PGField("create_at", .string, true)
         let updateAt = PGField("update_at", .string).def("2001-02-27")
     }
-    
-    static let fields = Fields()
     
     @ID(key: .id)                                                   var id: UUID?
     @Field(fields.email)                                            var email: String?
@@ -153,7 +150,10 @@ final class User: PGModel, @unchecked Sendable {
     @Timestamp(fields.createdAt, on: .create)                       var createdAt: Date?
     @Timestamp(fields.updateAt, on: .update)                        var updatedAt: Date?
     
-    struct MIG: PGMigration, Sendable { typealias DataModel = User }
+    struct MIG: PGMigration, Sendable {
+        typealias DataModel = User
+        let tdeEncrypt: Bool = false
+    }
 }
 
 extension User {
@@ -171,17 +171,17 @@ final class Transaction: PGModel, @unchecked Sendable {
     static let name = "transactions"
     
     struct Fields: PGFields {
-        static let tdeEncrypt: Bool = false
-        let id = PGField("id", .uuid)
+        let id = PGField("id", .uuid).primary
         let userId = PGField("user_id", User.fields.id.dataType).foreign(User.self, User.fields.id)
     }
-    
-    static let fields = Fields()
     
     @ID(key: .id)                                                   var id: UUID?
     @Parent(fields.userId)                                          var user: User
     
-    struct MIG: PGMigration, Sendable { typealias DataModel = Transaction }
+    struct MIG: PGMigration, Sendable {
+        typealias DataModel = Transaction
+        let tdeEncrypt: Bool = false
+    }
 }
 
 extension Transaction {
