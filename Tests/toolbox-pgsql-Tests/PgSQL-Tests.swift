@@ -61,7 +61,7 @@ struct PGSQLTests {
             #expect(res.metadata.command == "DROP SCHEMA")
             let res2 = try await db.query("CREATE SCHEMA public").get()
             #expect(res2.metadata.command == "CREATE SCHEMA")
-            try #require(await app.asyncShutdown())
+            try await app.asyncShutdown()
         } catch let err {
             try #require(Bool(false), "\(String(reflecting: err))")
         }
@@ -87,7 +87,7 @@ struct PGSQLTests {
                 try await user2.save(on: db as! any Database)
                 #expect(Bool(false), "唯一约束设置失败")
             } catch {
-                try #require(await user3.save(on: db as! any Database))
+                try await user3.save(on: db as! any Database)
                 let res = try #require(await User.query(on: db as! Database).filter(\User.$id == id3).first())
                 try #require(res.email != nil)
                 try #require(res.age != nil)

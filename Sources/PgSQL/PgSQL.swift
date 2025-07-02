@@ -2,21 +2,20 @@ import FluentPostgresDriver
 import ErrorHandle
 
 /// 数据库模块所有可能出现的错误
-public enum PGErrorTypes: String, ErrList {
-    public var domain: String { "ToolboxBsc.PgSQL" }
+public enum PGErrcase: String, ErrList {
     case dataBaseError = "数据库出现问题"
     case fieldDefineError = "Field 定义出现错误"
     case dataBaseTdeError = "数据库 TDE 加密失败"
 }
 
-public typealias PgErr = PGErrorTypes
+public typealias PgErr = PGErrcase
 
 // MARK: - 类型扩展
 
 extension PostgresQueryResult: @unchecked @retroactive Sendable {}
 
 public extension Array {
-    func asyncMap<T>(_ transform: (Element) async throws -> T) async throws -> [T] {
+    func asyncMap<T>(_ transform: (Element) async throws -> T) async rethrows -> [T] {
         var results = [T]()
         for element in self {
             try await results.append(transform(element))

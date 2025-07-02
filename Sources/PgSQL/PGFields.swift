@@ -34,7 +34,7 @@ internal extension PGFields {
         var properties: [PGField] = []
         let mirror = Mirror(reflecting: self)
         for case let (_, value) in mirror.children {
-            guard let val = value as? PGField else { fatalError(PgErr.fieldDefineError.d("解析失败", 1020).description) }
+            guard let val = value as? PGField else { fatalError(PgErr.fieldDefineError.d("解析失败").description) }
             properties.append(val)
         }
         return properties

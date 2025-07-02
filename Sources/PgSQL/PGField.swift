@@ -3,17 +3,17 @@ import FluentPostgresDriver
 /**
     #### 描述数据库表字段信息
     
-    与数据库中的表字段一一对应，描述字段的名称，数据类型，是否唯一，外键等等约束，支持使用追加的方式设置约束：
+    与数据库中的表字段一一对应，描述字段的名称，数据类型，是否唯一，外键等等约束，支持使用追加的方式设置约束: 
     
-    以下该示例定义了一个名为 user_name 的字段，其数据类型为 string，且不允许重复(即唯一约束)：
+    以下该示例定义了一个名为 user_name 的字段，其数据类型为 string，且不允许重复(即唯一约束): 
     ``` swift
     let userName = PGField("user_name", .string, true)
     ```
-    若你想要为其设置默认值：
+    若你想要为其设置默认值: 
     ``` swift
     let userName = PGField("user_name", .string, true).def("默认名称")
     ```
-    或者设置与表 role 的 id 字段建立外键关系，则：
+    或者设置与表 role 的 id 字段建立外键关系，则: 
     ``` swift
     // 表 "role" 的定义
     final class Role: PGModel, @unchecked Sendable {
@@ -45,7 +45,7 @@ import FluentPostgresDriver
         // ...
     }
     ```
-    若还要设置其他约束，可以进一步使用 cons() 追加。下面这个例子增加了一个额外的非空约束：
+    若还要设置其他约束，可以进一步使用 cons() 追加。下面这个例子增加了一个额外的非空约束: 
     ``` swift
     // 注意到，最后一个参数是一个数组，因此你可以放置任意数量的约束。
     // 所有支持的约束列表见 DatabaseSchema.FieldConstraint 的定义
@@ -73,11 +73,11 @@ public struct PGField: Sendable {
     
     /// 初始化字段，并设置基本信息
     ///
-    /// - 参数
-    ///     - name：字段名称
-    ///     - dataType：字段数据类型，完整的定义请见 DatabaseSchema.DataType 的定义
-    ///     - isUnique：该字段是否唯一(即其中的值是否可以重复)？
-    /// - 返回：包括以上基本信息的字段实例
+    /// - Parameters:
+    ///     - name: 字段名称
+    ///     - dataType: 字段数据类型，完整的定义请见 DatabaseSchema.DataType 的定义
+    ///     - isUnique: 该字段是否唯一(即其中的值是否可以重复)？
+    /// - Returns: 包括以上基本信息的字段实例
     public init(
         _ name: String,
         _ dataType: DatabaseSchema.DataType,
@@ -99,9 +99,10 @@ extension PGField {
     
     /// 为字段设置默认值
     ///
-    /// - 参数
-    ///     - value：即要设置的默认值，可以为多种类型。
-    /// - 返回：被设置了默认值的新字段实例
+    /// - Parameters:
+    ///     - value: 即要设置的默认值，可以为多种类型。
+    /// - Returns: 被设置了默认值的新字段实例
+    ///
     /// ``` swift
     /// let field = PGField(..., ...)
     /// let newField = field.def(100)
@@ -120,13 +121,13 @@ extension PGField {
     
     /// 为字段设置外键
     ///
-    /// - 参数
-    ///     - model：要创建外键的目标数据表模型
-    ///     - space：可选参数，表示命名空间或特定的表范围。如果 schema 中存在嵌套结构或多级分隔，space 可以帮助进一步细化表的范围
-    ///     - field：目标数据表模型的目标字段
-    ///     - onDelete：当外键约束的父记录被删除时，触发的动作(如 CASCADE)
-    ///     - onUpdate：当外键约束的父记录被更新时，触发的动作(如 RESTRICT)
-    /// - 返回：更新了外键约束的新字段实例
+    /// - Parameters:
+    ///     - model: 要创建外键的目标数据表模型
+    ///     - space: 可选参数，表示命名空间或特定的表范围。如果 schema 中存在嵌套结构或多级分隔，space 可以帮助进一步细化表的范围
+    ///     - field: 目标数据表模型的目标字段
+    ///     - onDelete: 当外键约束的父记录被删除时，触发的动作(如 CASCADE)
+    ///     - onUpdate: 当外键约束的父记录被更新时，触发的动作(如 RESTRICT)
+    /// - Returns: 更新了外键约束的新字段实例
     ///
     /// 可以像下面一样，多次叠加该函数以为一个字段创建多个外键引用，但这是不推荐的。
     /// ``` swift
@@ -140,6 +141,26 @@ extension PGField {
         onUpdate: DatabaseSchema.ForeignKeyAction = .noAction
     ) -> Self {
         .init(self, foreign: .references(model.schema, space: space, .string(field.name), onDelete: onDelete, onUpdate: onUpdate))
+    }
+    
+    public func foreign<S: PGModel>(
+        _ model: S.Type,
+        space: String? = nil,
+        _ field: KeyPath<S.Fields, PGField>,
+        onDelete: DatabaseSchema.ForeignKeyAction = .noAction,
+        onUpdate: DatabaseSchema.ForeignKeyAction = .noAction
+    ) -> Self {
+        .init(self, foreign: .references(model.schema, space: space, S.fields[keyPath: field].key, onDelete: onDelete, onUpdate: onUpdate))
+    }
+    
+    public func foreign<S: PGModel>(
+        _ model: S.Type,
+        space: String? = nil,
+        _ field: FieldKey,
+        onDelete: DatabaseSchema.ForeignKeyAction = .noAction,
+        onUpdate: DatabaseSchema.ForeignKeyAction = .noAction
+    ) -> Self {
+        .init(self, foreign: .references(model.schema, space: space, field, onDelete: onDelete, onUpdate: onUpdate))
     }
     
     /// 为字段设置其他约束
@@ -159,11 +180,11 @@ extension PGField {
     
     /// 为字段设置其他约束
     ///
-    /// - 参数
-    ///     - constraints：约束数组，即你要添加的约束
-    /// - 返回：更新了约束的新字段实例
+    /// - Parameters:
+    ///     - constraints: 约束数组，即你要添加的约束
+    /// - Returns: 更新了约束的新字段实例
     ///
-    /// 可进行追加设置，而叠加会自动应用所有的约束：
+    /// 可进行追加设置，而叠加会自动应用所有的约束: 
     /// ``` swift
     /// // 单次追加
     /// let field = PGField(..., ...).cons([..., ...])
