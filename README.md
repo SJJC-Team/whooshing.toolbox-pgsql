@@ -15,13 +15,13 @@
 在依赖模块中引入:
 
 ```swift
-.product(name: "WhooshingClient", package: "whooshing.toolbox-client")
+.product(name: "PgSQL", package: "whooshing.toolbox-pgsql")
 ```
 
 在需要的地方:
 
 ```swift
-import WhooshingClient
+import PgSQL
 ```
 
 --------
