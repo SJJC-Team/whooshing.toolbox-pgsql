@@ -19,8 +19,10 @@ public protocol PGMigration: Migration, Sendable {
 }
 
 public extension PGMigration {
+    @inlinable
     var tdeEncrypt: Bool { true }
     
+    @inlinable
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         Self.tableCreate(
             DataModel.schema,
@@ -32,13 +34,16 @@ public extension PGMigration {
         }
     }
     
+    @inlinable
     func revert(on database: Database) -> EventLoopFuture<Void> {
         database.schema(DataModel.schema).delete()
     }
     
+    @inlinable
     func migrationFinished(on database: Database) {}
     
-    private static func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
+    @inlinable
+    internal static func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
         var s = database.schema(name)
         var uniques: [FieldKey] = []
         var primarys: [String] = []

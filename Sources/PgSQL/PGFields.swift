@@ -29,7 +29,8 @@ public protocol PGFields: Sendable {
     init()
 }
 
-internal extension PGFields {
+extension PGFields {
+    @inlinable
     func params() -> [PGField] {
         var properties: [PGField] = []
         let mirror = Mirror(reflecting: self)

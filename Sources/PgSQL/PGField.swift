@@ -78,6 +78,7 @@ public struct PGField: Sendable {
     ///     - dataType: 字段数据类型，完整的定义请见 DatabaseSchema.DataType 的定义
     ///     - isUnique: 该字段是否唯一(即其中的值是否可以重复)？
     /// - Returns: 包括以上基本信息的字段实例
+    @inlinable
     public init(
         _ name: String,
         _ dataType: DatabaseSchema.DataType,
@@ -91,10 +92,13 @@ public struct PGField: Sendable {
 extension PGField {
     
     /// 为字段设置一个必须约束，表示该字段不可为 null
+    @inlinable
     public var required: Self { self.cons([.required]) }
     /// 为字段设置一个唯一约束，表示该字段不可重复
+    @inlinable
     public var unique: Self { .init(self, unique: true, primary: self.isPrimary) }
     /// 将该字段设置为主键之一
+    @inlinable
     public var primary: Self { .init(self, unique: false, primary: true) }
     
     /// 为字段设置默认值
@@ -133,6 +137,7 @@ extension PGField {
     /// ``` swift
     /// let field = PGField(..., ...).foreign(User.self, User.fields.id).foreign(Infos.self, Infos.fields.id).foreign(...)...
     /// ```
+    @inlinable
     public func foreign<S: PGModel>(
         _ model: S.Type,
         space: String? = nil,
@@ -143,6 +148,7 @@ extension PGField {
         .init(self, foreign: .references(model.schema, space: space, .string(field.name), onDelete: onDelete, onUpdate: onUpdate))
     }
     
+    @inlinable
     public func foreign<S: PGModel>(
         _ model: S.Type,
         space: String? = nil,
@@ -153,6 +159,7 @@ extension PGField {
         .init(self, foreign: .references(model.schema, space: space, S.fields[keyPath: field].key, onDelete: onDelete, onUpdate: onUpdate))
     }
     
+    @inlinable
     public func foreign<S: PGModel>(
         _ model: S.Type,
         space: String? = nil,
@@ -176,6 +183,7 @@ extension PGField {
     /// // 叠加，只会采用所有的约束设置
     /// let field = PGField(..., ...).cons(...).cons(...).cons(...)
     /// ```
+    @inlinable
     public func cons(_ constraint: DatabaseSchema.FieldConstraint) -> Self { self.cons([constraint]) }
     
     /// 为字段设置其他约束
@@ -191,12 +199,14 @@ extension PGField {
     /// // 叠加，会采用所有的约束设置
     /// let field = PGField(..., ...).cons([..., ...]).cons([..., ...]).cons([..., ...])
     /// ```
+    @inlinable
     public func cons(_ constraints: [DatabaseSchema.FieldConstraint]) -> Self {
         .init(self, constraints: constraints)
     }
 }
 
-internal extension PGField {
+extension PGField {
+    @inlinable
     init(_ s: Self, unique: Bool, primary: Bool) {
         self = Self(
             name: s.name,
@@ -209,6 +219,7 @@ internal extension PGField {
         )
     }
     
+    @inlinable
     init(_ s: Self, def: DatabaseSchema.FieldConstraint) {
         self = Self(
             name: s.name,
@@ -221,6 +232,7 @@ internal extension PGField {
         )
     }
     
+    @inlinable
     init(_ s: Self, foreign: DatabaseSchema.FieldConstraint) {
         self = Self(
             name: s.name,
@@ -233,6 +245,7 @@ internal extension PGField {
         )
     }
     
+    @inlinable
     init(_ s: Self, constraints: [DatabaseSchema.FieldConstraint]) {
         self = Self(
             name: s.name,
@@ -245,6 +258,7 @@ internal extension PGField {
         )
     }
     
+    @inlinable
     init(
         name: String,
         dataType: DatabaseSchema.DataType,

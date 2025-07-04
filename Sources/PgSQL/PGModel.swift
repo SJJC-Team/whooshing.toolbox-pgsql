@@ -77,6 +77,9 @@ public protocol PGModel: Model, Sendable where Self.MIG.DataModel == Self {
 }
 
 public extension PGModel {
+    @inlinable
     static var schema: String { Self.name }
+    
+    @inlinable
     static var fields: Fields { Self.Fields() }
 }

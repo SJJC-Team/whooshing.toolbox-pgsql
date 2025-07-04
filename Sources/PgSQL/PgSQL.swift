@@ -15,6 +15,7 @@ public typealias PgErr = PGErrcase
 extension PostgresQueryResult: @unchecked @retroactive Sendable {}
 
 public extension Array {
+    @inlinable
     func asyncMap<T>(_ transform: (Element) async throws -> T) async rethrows -> [T] {
         var results = [T]()
         for element in self {
@@ -25,6 +26,7 @@ public extension Array {
 }
 
 public extension PostgresRow {
+    @inlinable
     func datas() -> [String: PostgresData] {
         var row: [String: PostgresData] = [:]
         for cell in self {
