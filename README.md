@@ -9,7 +9,7 @@
 在你的 Package.swift 加入：
 
 ``` swift
-.package(url: "https://github.com/SJJC-Team/whooshing.toolbox-pgsql.git", .upToNextMajor(from: "1.0.4"))
+.package(url: "https://github.com/SJJC-Team/whooshing.toolbox-pgsql.git", .upToNextMajor(from: "1.0.5"))
 ```
 
 在依赖模块中引入:

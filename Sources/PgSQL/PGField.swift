@@ -52,6 +52,7 @@ import FluentPostgresDriver
     let userName = PGField("user_name", .string, true).cons([.require])
     ```
 */
+@frozen
 public struct PGField: Sendable {
     /// 字段的名称
     public let name: String
@@ -69,6 +70,7 @@ public struct PGField: Sendable {
     public let constraints: [DatabaseSchema.FieldConstraint]
     
     /// 返回 FieldKey，用于在 @Field 中引用。不过几乎可以不用该计算属性。
+    @inlinable
     public var key: FieldKey { .string(self.name) }
     
     /// 初始化字段，并设置基本信息
