@@ -17,9 +17,9 @@ struct PGSQLTests {
                     configuration: .init(
                         hostname: "localhost",
                         port: 5432,
-                        username: "clwang",
+                        username: "testing",
                         password: "testing",
-                        database: "postgres",
+                        database: "testing",
                         tls: .disable
                     )
                 ),
