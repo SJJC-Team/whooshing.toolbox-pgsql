@@ -67,7 +67,7 @@ import FluentPostgresDriver
     );
     ```
 */
-public protocol PGModel: Model, Sendable where Self.MIG.DataModel == Self {
+public protocol PGModel: Model, Sendable {
     associatedtype MIG: PGMigration
     associatedtype Fields: PGFields
     /// 表的名称

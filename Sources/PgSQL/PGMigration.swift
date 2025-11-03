@@ -46,10 +46,15 @@ public extension PGMigration {
     internal static func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
         var s = database.schema(name)
         var uniques: [FieldKey] = []
+        var compositeUniques: [String: [FieldKey]] = [:]
         var primarys: [String] = []
         for params in fields {
             if params.isPrimary { primarys.append(params.name) }
-            if params.isUnique { uniques.append(params.key) }
+            switch params.uniqueConstraint {
+            case .none: break
+            case .alone: uniques.append(params.key)
+            case .composite(let sign): compositeUniques[sign, default: []].append(params.key)
+            }
             typealias Old = (FieldKey, DatabaseSchema.DataType, DatabaseSchema.FieldConstraint...) -> SchemaBuilder
             typealias Function = (FieldKey, DatabaseSchema.DataType, [DatabaseSchema.FieldConstraint]) -> SchemaBuilder
             let fieldConfig = unsafeBitCast(s.field as Old, to: Function.self)
@@ -57,6 +62,16 @@ public extension PGMigration {
             s = fieldConfig(params.key, params.dataType, constraints)
         }
         for unique in uniques { s = s.unique(on: unique) }
+        for (name, uniqueGroup) in compositeUniques {
+            switch uniqueGroup.count {
+            case 0: break
+            case 1: s = s.unique(on: uniqueGroup[0], name: name)
+            case 2: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], name: name)
+            case 3: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], name: name)
+            case 4: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], uniqueGroup[3], name: name)
+            default: fatalError("暂不支持多于 4 字段的复合唯一约束")
+            }
+        }
         if primarys.count > 0 {
             let primaryConstraint = "PRIMARY KEY (\"\(primarys.joined(separator: "\", \""))\")"
             s = s.constraint(.custom(primaryConstraint))
