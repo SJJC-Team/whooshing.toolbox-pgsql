@@ -14,6 +14,16 @@ public protocol PGMigration: Migration, Sendable {
     /// 指定该表是否应当使用 tde 加密，默认为 true
     var tdeEncrypt: Bool { get }
     
+    /// 该协议函数在每个字段将被创建之前调用。
+    /// - parameters:
+    ///     - field: 当前准备创建的字段
+    ///     - builder: migration 工厂实例
+    /// 你可以覆写 `migrating(for: with:)` 函数为字段赋予更多约束，该函数默认不进行任何动作
+    func migrating(for field: PGField, with builder: SchemaBuilder) -> SchemaBuilder
+    
+    /// 你可以覆写 `migrating(with:)` 函数为表创建增加其它自定约束，该函数默认不进行任何动作
+    func migrating(with builder: SchemaBuilder) -> SchemaBuilder
+    
     /// 你可以覆写 `migrationFinished(on:)` 函数来获取表结构生成完成的通知，该函数默认不进行任何动作
     func migrationFinished(on database: Database)
 }
@@ -24,7 +34,7 @@ public extension PGMigration {
     
     @inlinable
     func prepare(on database: Database) -> EventLoopFuture<Void> {
-        Self.tableCreate(
+        tableCreate(
             DataModel.schema,
             database: database,
             fields: DataModel.fields.params(),
@@ -40,10 +50,16 @@ public extension PGMigration {
     }
     
     @inlinable
+    func migrating(for field: PGField, with builder: SchemaBuilder) -> SchemaBuilder { builder }
+    
+    @inlinable
+    func migrating(with builder: SchemaBuilder) -> SchemaBuilder { builder }
+    
+    @inlinable
     func migrationFinished(on database: Database) {}
     
     @inlinable
-    internal static func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
+    internal func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
         var s = database.schema(name)
         var uniques: [FieldKey] = []
         var compositeUniques: [String: [FieldKey]] = [:]
@@ -59,6 +75,7 @@ public extension PGMigration {
             typealias Function = (FieldKey, DatabaseSchema.DataType, [DatabaseSchema.FieldConstraint]) -> SchemaBuilder
             let fieldConfig = unsafeBitCast(s.field as Old, to: Function.self)
             let constraints = params.constraints + (params.defaultValue != nil ? [params.defaultValue!] : []) + params.foreigns
+            s = migrating(for: params, with: s)
             s = fieldConfig(params.key, params.dataType, constraints)
         }
         for unique in uniques { s = s.unique(on: unique) }
@@ -76,6 +93,8 @@ public extension PGMigration {
             let primaryConstraint = "PRIMARY KEY (\"\(primarys.joined(separator: "\", \""))\")"
             s = s.constraint(.custom(primaryConstraint))
         }
+        
+        s = migrating(with: s)
         
         return s.create().flatMap {
             guard encrypt == true else { return database.eventLoop.makeSucceededVoidFuture() }

@@ -29,6 +29,26 @@ public protocol PGFields: Sendable {
     init()
 }
 
+public extension DatabaseSchema.DataType.Enum {
+    @inlinable
+    init<T>(_ enum: T.Type, as name: String) where T: RawRepresentable & CaseIterable & Codable & Sendable, T.RawValue == String {
+        self = Self.init(name: name, cases: T.allCases.map { $0.rawValue })
+    }
+}
+
+public extension DatabaseSchema.DataType {
+    @inlinable
+    static func `enum`<T>(
+        _ enum: T.Type,
+        as name: String
+    ) -> Self where
+        T: RawRepresentable & CaseIterable & Codable & Sendable,
+        T.RawValue == String
+    {
+        .enum(.init(`enum`, as: name))
+    }
+}
+
 extension PGFields {
     @inlinable
     func params() -> [PGField] {
