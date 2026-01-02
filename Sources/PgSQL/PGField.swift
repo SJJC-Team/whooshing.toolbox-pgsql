@@ -67,7 +67,7 @@ public struct PGField: Sendable {
     /// let constraint: UniqueConstraint = .composite(with: "group_id")
     /// ```
     @frozen
-    public enum UniqueConstraint: Sendable {
+    public enum UniqueConstraint: Sendable, Equatable {
         /// 不施加唯一性约束。
         case none
 

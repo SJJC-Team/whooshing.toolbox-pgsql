@@ -64,6 +64,7 @@ public extension PGMigration {
         var uniques: [FieldKey] = []
         var compositeUniques: [String: [FieldKey]] = [:]
         var primarys: [String] = []
+        var dataTypeActions: [EventLoopFuture<Void>] = []
         for params in fields {
             if params.isPrimary { primarys.append(params.name) }
             switch params.uniqueConstraint {
@@ -76,7 +77,21 @@ public extension PGMigration {
             let fieldConfig = unsafeBitCast(s.field as Old, to: Function.self)
             let constraints = params.constraints + (params.defaultValue != nil ? [params.defaultValue!] : []) + params.foreigns
             s = migrating(for: params, with: s)
-            s = fieldConfig(params.key, params.dataType, constraints)
+            
+            if case let .enum(e) = params.dataType {
+                let enumSchema = database.enum(e.name)
+                var currentS = enumSchema
+                for caseName in e.cases {
+                    currentS = currentS.case(caseName)
+                }
+                dataTypeActions.append(
+                    currentS.create().map { dataType in
+                        s = fieldConfig(params.key, params.dataType, constraints)
+                    }
+                )
+            } else {
+                s = fieldConfig(params.key, params.dataType, constraints)
+            }
         }
         for unique in uniques { s = s.unique(on: unique) }
         for (name, uniqueGroup) in compositeUniques {
@@ -96,13 +111,15 @@ public extension PGMigration {
         
         s = migrating(with: s)
         
-        return s.create().flatMap {
-            guard encrypt == true else { return database.eventLoop.makeSucceededVoidFuture() }
-            guard let db = database as? PostgresDatabase else { return database.eventLoop.future(error: PgErr.dataBaseError.d("数据库类型不是 PostgreSQL")) }
-            return db.query("ALTER TABLE \(name) SET ACCESS METHOD tde_heap;").flatMapError { err in
-                database.schema(name).delete().flatMapError { return database.eventLoop.future(error: PgErr.dataBaseTdeError.d("恢复失败").subErr($0))}
-                .flatMap { _ in database.eventLoop.future(error: PgErr.dataBaseTdeError.d("加密未成功，已删除该表格").subErr(err)) }
-            }.transform(to: ())
+        return dataTypeActions.flatten(on: database.eventLoop).flatMap {
+            s.create().flatMap {
+                guard encrypt == true else { return database.eventLoop.makeSucceededVoidFuture() }
+                guard let db = database as? PostgresDatabase else { return database.eventLoop.future(error: PgErr.dataBaseError.d("数据库类型不是 PostgreSQL")) }
+                return db.query("ALTER TABLE \(name) SET ACCESS METHOD tde_heap;").flatMapError { err in
+                    database.schema(name).delete().flatMapError { return database.eventLoop.future(error: PgErr.dataBaseTdeError.d("恢复失败").subErr($0))}
+                    .flatMap { _ in database.eventLoop.future(error: PgErr.dataBaseTdeError.d("加密未成功，已删除该表格").subErr(err)) }
+                }.transform(to: ())
+            }
         }
     }
 }
