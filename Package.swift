@@ -26,7 +26,7 @@ let package = Package(
                 .product(name: "ErrorHandle", package: "whooshing.toolbox-basic"),
                 .product(name: "NIOAdvanced", package: "whooshing.toolbox-basic"),
                 .product(name: "Fluent", package: "whooshing-fluent"),
-                .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
+                .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver")
             ]
         ),
         .testTarget(
