@@ -9,7 +9,7 @@
 在你的 Package.swift 加入：
 
 ``` swift
-.package(url: "https://github.com/SJJC-Team/whooshing.toolbox-pgsql.git", .upToNextMajor(from: "1.0.5"))
+.package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-pgsql.git", .upToNextMajor(from: "1.0.7"))
 ```
 
 在依赖模块中引入:
@@ -39,6 +39,6 @@ import PgSQL
 
 ### 联系与反馈
 
-如有使用问题或建议，请通过 [GitHub Issues](https://github.com/SJJC-Team/whooshing.toolbox-pgsql/issues) 提交反馈。
+如有使用问题或建议，请通过 [GitHub Issues](https://github.com/whooshing-workshop/whooshing.toolbox-pgsql/issues) 提交反馈。
 
 或发至邮箱 [contact@official.whooshings.space](mailto:contact@official.whooshings.space)

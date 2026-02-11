@@ -15,9 +15,9 @@ let package = Package(
         .library( name: "PgSQL", targets: ["PgSQL"] ),
     ],
     dependencies: [
-        .package(url: "https://github.com/SJJC-Team/whooshing-fluent.git", from: "1.0.0"),
+        .package(url: "https://github.com/whooshing-workshop/whooshing-fluent.git", from: "1.0.0"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.10.0"),
-        .package(url: "https://github.com/SJJC-Team/whooshing.toolbox-basic.git", .upToNextMajor(from: "1.4.2"))
+        .package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-basic.git", from: "1.5.0")
     ],
     targets: [
         .target(

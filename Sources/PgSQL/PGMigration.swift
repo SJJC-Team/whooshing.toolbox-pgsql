@@ -1,5 +1,5 @@
-import FluentPostgresDriver
 import ErrorHandle
+@preconcurrency import FluentPostgresDriver
 
 /**
     #### 实现该协议，以进行表结构生成和迁移
