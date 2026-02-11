@@ -37,9 +37,9 @@ struct PGSQLTests {
     
     @Test("测试 PGField 初始化")
     func testPGFieldInitialization() {
-        let param = PGField("email", .string, true)
+        let param = PGField("email", .string).unique
         #expect(param.name == "email")
-        #expect(param.isUnique == true)
+        #expect(param.uniqueConstraint == .alone)
     }
 
     @Test("测试 User 模型字段定义")
@@ -63,7 +63,7 @@ struct PGSQLTests {
             #expect(res2.metadata.command == "CREATE SCHEMA")
             try await app.asyncShutdown()
         } catch let err {
-            try #require(Bool(false), "\(String(reflecting: err))")
+            #expect(Bool(false), "\(String(reflecting: err))")
         }
     }
     
@@ -73,12 +73,12 @@ struct PGSQLTests {
         
         defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
         
-        let user1 = User(id: .init(), email: "test1@test.com", age: 24)
-        let user2 = User(id: .init(), email: "test2@test.com", age: 24)
+        let user1 = User(id: .init(), kind: .apple, email: "test1@test.com", age: 24)
+        let user2 = User(id: .init(), kind: .banana, email: "test2@test.com", age: 24)
         let id3 = UUID()
         let id4 = UUID()
-        let user3 = User(id: id3)
-        let user4 = User(id: id4, age: 45)
+        let user3 = User(id: id3, kind: .watermelon)
+        let user4 = User(id: id4, kind: .watermelon, age: 45)
         user4.email = nil
         
         do {
@@ -92,6 +92,7 @@ struct PGSQLTests {
                 try #require(res.email != nil)
                 try #require(res.age != nil)
                 #expect(res.email! == "null@null.com")
+                #expect(res.kind == .watermelon)
                 #expect(res.age! == 30)
                 do {
                     try await user4.save(on: db as! Database)
@@ -101,7 +102,7 @@ struct PGSQLTests {
                 }
             }
         } catch let err {
-            try #require(Bool(false), "\(String(reflecting: err))")
+            #expect(Bool(false), "\(String(reflecting: err))")
         }
     }
     
@@ -112,7 +113,7 @@ struct PGSQLTests {
         defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
         
         let id1 = UUID()
-        let user1 = User(id: id1, email: "test2@test.com", age: 50)
+        let user1 = User(id: id1, kind: .apple, email: "test2@test.com", age: 50)
         let transaction1 = Transaction(id: .init(), userId: id1)
         let transaction2 = Transaction(id: .init(), userId: .init())
         
@@ -126,10 +127,78 @@ struct PGSQLTests {
                 #expect(Bool(true))
             }
         } catch let err {
-            try #require(Bool(false), "\(String(reflecting: err))")
+            #expect(Bool(false), "\(String(reflecting: err))")
         }
     }
     
+    @Test("测试数据库 JSON 增") func testJsonCreate() async throws {
+        let res = await start()
+        guard let app = res.app, let db = res.db else { try #require(Bool(false), "数据库连接失败"); return }
+        
+        defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
+        
+        let user = User(
+            id: UUID(uuidString: "9687e83e-2895-46c5-849a-4c90d54f5756")!,
+            kind: .apple,
+            json: ["color": "red"],
+            age: 78
+        )
+        
+        do {
+            try await user.save(on: db as! Database)
+        } catch let err {
+            #expect(Bool(false), "\(String(reflecting: err))")
+        }
+    }
+    
+    @Test("测试数据库 JSON 改") func testJsonUpdate() async throws {
+        let res = await start()
+        guard let app = res.app, let db = res.db else { try #require(Bool(false), "数据库连接失败"); return }
+        
+        defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
+        
+        do {
+            try await User
+                .query(on: db as! Database)
+                .filter(\.$id == UUID(uuidString: "9687e83e-2895-46c5-849a-4c90d54f5756")!)
+                .set([
+                    User.Fields().json.key: .custom(
+                        jsonbSetSql(
+                            field: "json",
+                            path: ["color"],
+                            value: "blue"
+                        )
+                    )
+                ])
+                .update()
+            
+            let user = try await User.query(on: db as! Database)
+                .filter(\.$id == UUID(uuidString: "9687e83e-2895-46c5-849a-4c90d54f5756")!)
+                .first()
+            
+            let u = try #require(user)
+            
+            #expect(u.json == ["color": "blue"])
+            
+        } catch let err {
+            #expect(Bool(false), "\(String(reflecting: err))")
+        }
+    }
+    
+    func jsonbSetSql<V: Encodable>(field: String, path: [String], value: V) throws -> SQLRaw {
+        let data = try JSONEncoder().encode(value)
+        
+        let jsonString = String(data: data, encoding: .utf8) ?? ""
+        let pathArray = "{\(path.joined(separator: ","))}"
+        
+        return .init("jsonb_set(\(field), '\(pathArray)', '\(jsonString)')")
+    }
+}
+
+enum Kind: String, Codable, CaseIterable {
+    case apple
+    case banana
+    case watermelon
 }
 
 final class User: PGModel, @unchecked Sendable {
@@ -139,16 +208,20 @@ final class User: PGModel, @unchecked Sendable {
     struct Fields: PGFields {
         let id = PGField("id", .uuid).primary
         let email = PGField("email", .string).cons([.sql(.default("null@null.com")), .required])
-        let age = PGField("age", .int, true).def(30)
-        let createdAt = PGField("create_at", .string, true)
+        let age = PGField("age", .int).unique.def(30)
+        let kind = PGField("kind", .enum(Kind.self, as: "Kind")).required
+        let json = PGField("json", .json).required
+        let createdAt = PGField("create_at", .string).unique
         let updateAt = PGField("update_at", .string).def("2001-02-27")
     }
     
-    @ID(key: .id)                                                   var id: UUID?
-    @Field(fields.email)                                            var email: String?
-    @Field(fields.age)                                              var age: Int?
-    @Timestamp(fields.createdAt, on: .create)                       var createdAt: Date?
-    @Timestamp(fields.updateAt, on: .update)                        var updatedAt: Date?
+    @ID(key: .id)                                   var id: UUID?
+    @Field(fields.email)                            var email: String?
+    @Field(fields.age)                              var age: Int?
+    @Enum(fields.kind)                              var kind: Kind
+    @Field(fields.json)                             var json: [String: String]
+    @Timestamp(fields.createdAt, on: .create)       var createdAt: Date?
+    @Timestamp(fields.updateAt, on: .update)        var updatedAt: Date?
     
     struct MIG: PGMigration, Sendable {
         typealias DataModel = User
@@ -157,9 +230,11 @@ final class User: PGModel, @unchecked Sendable {
 }
 
 extension User {
-    convenience init(id: UUID, email: String? = nil, age: Int? = nil) {
+    convenience init(id: UUID, kind: Kind, json: [String: String] = [:], email: String? = nil, age: Int? = nil) {
         self.init()
         self.id = id
+        self.kind = kind
+        self.json = json
         if email != nil { self.email = email }
         if age != nil { self.age = age }
     }

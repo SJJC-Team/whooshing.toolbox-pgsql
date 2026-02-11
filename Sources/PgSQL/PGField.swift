@@ -54,12 +54,37 @@ import FluentPostgresDriver
 */
 @frozen
 public struct PGField: Sendable {
+    
+    /// 表示数据库字段的唯一性约束类型。
+    ///
+    /// 此枚举用于描述在数据模型或迁移中，某字段（或字段组合）所需的唯一性约束。
+    /// - `none`：不施加唯一性约束。
+    /// - `alone`：该字段本身必须是唯一的（单字段唯一约束）。
+    /// - `composite(with:)`：该字段与指定的另一个有同标志的字段组合形成复合唯一约束。
+    ///
+    /// 使用示例：
+    /// ```swift
+    /// let constraint: UniqueConstraint = .composite(with: "group_id")
+    /// ```
+    @frozen
+    public enum UniqueConstraint: Sendable, Equatable {
+        /// 不施加唯一性约束。
+        case none
+
+        /// 字段必须独自唯一（单字段唯一约束）。
+        case alone
+
+        /// 与指定字段组合形成复合唯一约束。
+        /// - Parameter with: 参与复合唯一约束的另一个标志名称。
+        case composite(with: String)
+    }
+    
     /// 字段的名称
     public let name: String
     /// 字段的数据类型
     public let dataType: DatabaseSchema.DataType
-    /// 该字段是否唯一？
-    public let isUnique: Bool
+    /// 该字段的唯一约束
+    public let uniqueConstraint: UniqueConstraint
     /// 该字段是否为主键？
     public let isPrimary: Bool
     /// 该字段的默认值约束
@@ -84,10 +109,10 @@ public struct PGField: Sendable {
     public init(
         _ name: String,
         _ dataType: DatabaseSchema.DataType,
-        _ isUnique: Bool = false,
+        _ unique: UniqueConstraint = .none,
         _ isPrimary: Bool = false
     ) {
-        self = Self.init(name: name, dataType: dataType, isUnique: isUnique, isPrimary: isPrimary, defaultValue: nil, foreigns: [], constraints: [])
+        self = Self.init(name: name, dataType: dataType, unique: unique, isPrimary: isPrimary, defaultValue: nil, foreigns: [], constraints: [])
     }
 }
 
@@ -98,10 +123,16 @@ extension PGField {
     public var required: Self { self.cons([.required]) }
     /// 为字段设置一个唯一约束，表示该字段不可重复
     @inlinable
-    public var unique: Self { .init(self, unique: true, primary: self.isPrimary) }
+    public var unique: Self { .init(self, unique: .alone, primary: self.isPrimary) }
     /// 将该字段设置为主键之一
     @inlinable
-    public var primary: Self { .init(self, unique: false, primary: true) }
+    public var primary: Self { .init(self, unique: .none, primary: true) }
+    
+    /// 为字段设置一个唯一约束，该字段与指定的另一个有同标志的字段组合形成复合唯一约束。
+    @inlinable
+    public func unique(composite sign: String) -> Self {
+        .init(self, unique: .composite(with: sign), primary: self.isPrimary)
+    }
     
     /// 为字段设置默认值
     ///
@@ -209,11 +240,11 @@ extension PGField {
 
 extension PGField {
     @inlinable
-    init(_ s: Self, unique: Bool, primary: Bool) {
+    init(_ s: Self, unique: UniqueConstraint, primary: Bool) {
         self = Self(
             name: s.name,
             dataType: s.dataType,
-            isUnique: unique,
+            unique: unique,
             isPrimary: primary,
             defaultValue: s.defaultValue,
             foreigns: s.foreigns,
@@ -226,7 +257,7 @@ extension PGField {
         self = Self(
             name: s.name,
             dataType: s.dataType,
-            isUnique: s.isUnique,
+            unique: s.uniqueConstraint,
             isPrimary: s.isPrimary,
             defaultValue: def,
             foreigns: s.foreigns,
@@ -239,7 +270,7 @@ extension PGField {
         self = Self(
             name: s.name,
             dataType: s.dataType,
-            isUnique: s.isUnique,
+            unique: s.uniqueConstraint,
             isPrimary: s.isPrimary,
             defaultValue: s.defaultValue,
             foreigns: s.foreigns + [foreign],
@@ -252,7 +283,7 @@ extension PGField {
         self = Self(
             name: s.name,
             dataType: s.dataType,
-            isUnique: s.isUnique,
+            unique: s.uniqueConstraint,
             isPrimary: s.isPrimary,
             defaultValue: s.defaultValue,
             foreigns: s.foreigns,
@@ -264,7 +295,7 @@ extension PGField {
     init(
         name: String,
         dataType: DatabaseSchema.DataType,
-        isUnique: Bool,
+        unique: UniqueConstraint,
         isPrimary: Bool,
         defaultValue: DatabaseSchema.FieldConstraint?,
         foreigns: [DatabaseSchema.FieldConstraint],
@@ -275,7 +306,7 @@ extension PGField {
         self.constraints = constraints
         self.defaultValue = defaultValue
         self.foreigns = foreigns
-        self.isUnique = isUnique
+        self.uniqueConstraint = unique
         self.isPrimary = isPrimary
     }
 }

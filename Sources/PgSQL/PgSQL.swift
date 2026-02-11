@@ -12,7 +12,7 @@ public typealias PgErr = PGErrcase
 
 // MARK: - 类型扩展
 
-extension PostgresQueryResult: @unchecked @retroactive Sendable {}
+public typealias PGDatabase = Database & PostgresDatabase & SQLDatabase
 
 public extension Array {
     @inlinable
