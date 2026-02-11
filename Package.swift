@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v10_15),
         .iOS(.v14),
         .watchOS(.v6),
-        .tvOS(.v13),
+        .tvOS(.v13)
     ],
     products: [
         .library( name: "PgSQL", targets: ["PgSQL"] ),
@@ -26,7 +26,7 @@ let package = Package(
                 .product(name: "ErrorHandle", package: "whooshing.toolbox-basic"),
                 .product(name: "NIOAdvanced", package: "whooshing.toolbox-basic"),
                 .product(name: "Fluent", package: "whooshing-fluent"),
-                .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
+                .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver")
             ]
         ),
         .testTarget(
