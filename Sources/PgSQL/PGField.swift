@@ -134,6 +134,15 @@ extension PGField {
         .init(self, unique: .composite(with: sign), primary: self.isPrimary)
     }
     
+    /// 将该字段设置为自增/非自增主键
+    ///
+    /// - Parameters:
+    ///     - auto: 该主键是否自动自增
+    @inlinable
+    public func identifier(auto: Bool) -> Self {
+        .init(name, dataType).cons(.identifier(auto: auto))
+    }
+    
     /// 为字段设置默认值
     ///
     /// - Parameters:

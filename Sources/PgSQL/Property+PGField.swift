@@ -54,7 +54,7 @@ public extension TimestampProperty {
     convenience init(
         _ params: PGField,
         on trigger: TimestampTrigger,
-        format: TimestampFormatFactory<Format> = .iso8601(withMilliseconds: true)
+        format: TimestampFormatFactory<Format> = .default
     ) {
         self.init(key: .string(params.name), on: trigger, format: format.makeFormat())
     }
