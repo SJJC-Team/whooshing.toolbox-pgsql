@@ -52,7 +52,7 @@ struct PGSQLTests {
     
     @Test("测试 SQL 语句运行") func testSQLStatement() async throws {
         let res = await start()
-        guard let app = res.app, let db = res.db else { try #require(Bool(false), "\(res.err!)"); return }
+        guard let app = res.app, let db = res.db else { try #require(Bool(false), "\(String(reflecting: res.err!))"); return }
         
         defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
         
@@ -69,7 +69,7 @@ struct PGSQLTests {
     
     @Test("检查所创建的表结构") func testPropertyWrappers() async throws {
         let res = await start()
-        guard let app = res.app, let db = res.db else { try #require(Bool(false), "\(res.err!)"); return }
+        guard let app = res.app, let db = res.db else { try #require(Bool(false), "\(String(reflecting: res.err!))"); return }
         
         defer { Task { if !app.didShutdown { try! await app.asyncShutdown() } } }
         
@@ -211,8 +211,8 @@ final class User: PGModel, @unchecked Sendable {
         let age = PGField("age", .int).unique.def(30)
         let kind = PGField("kind", .enum(Kind.self, as: "Kind")).required
         let json = PGField("json", .json).required
-        let createdAt = PGField("create_at", .string).unique
-        let updateAt = PGField("update_at", .string).def("2001-02-27")
+        let createdAt = PGField("create_at", .datetime).unique
+        let updateAt = PGField("update_at", .datetime).def("2001-02-27")
     }
     
     @ID(key: .id)                                   var id: UUID?
