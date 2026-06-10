@@ -25,6 +25,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ErrorHandle", package: "whooshing.toolbox-basic"),
                 .product(name: "NIOAdvanced", package: "whooshing.toolbox-basic"),
+                .product(name: "LoggingAdvanced", package: "whooshing.toolbox-basic"),
                 .product(name: "Fluent", package: "whooshing-fluent"),
                 .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver")
             ]
