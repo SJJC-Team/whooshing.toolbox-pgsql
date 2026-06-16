@@ -1,4 +1,5 @@
 import ErrorHandle
+import NIOConcurrencyHelpers
 @preconcurrency import FluentPostgresDriver
 
 /**
@@ -60,7 +61,7 @@ public extension PGMigration {
     
     @inlinable
     internal func tableCreate(_ name: String, database: Database, fields: [PGField], encrypt: Bool) -> EventLoopFuture<Void> {
-        var s = database.schema(name)
+        let s = SchemaBuilderWrapper(wrapped: database.schema(name))
         var uniques: [FieldKey] = []
         var compositeUniques: [String: [FieldKey]] = [:]
         var primarys: [String] = []
@@ -73,10 +74,10 @@ public extension PGMigration {
             case .composite(let sign): compositeUniques[sign, default: []].append(params.key)
             }
             typealias Old = (FieldKey, DatabaseSchema.DataType, DatabaseSchema.FieldConstraint...) -> SchemaBuilder
-            typealias Function = (FieldKey, DatabaseSchema.DataType, [DatabaseSchema.FieldConstraint]) -> SchemaBuilder
-            let fieldConfig = unsafeBitCast(s.field as Old, to: Function.self)
+            typealias Function = @Sendable (FieldKey, DatabaseSchema.DataType, [DatabaseSchema.FieldConstraint]) -> SchemaBuilder
+            let fieldConfig = unsafeBitCast(s.wrapped.field as Old, to: Function.self)
             let constraints = params.constraints + (params.defaultValue != nil ? [params.defaultValue!] : []) + params.foreigns
-            s = migrating(for: params, with: s)
+            s.wrapped = migrating(for: params, with: s.wrapped)
             
             if case let .enum(e) = params.dataType {
                 let enumSchema = database.enum(e.name)
@@ -86,33 +87,33 @@ public extension PGMigration {
                 }
                 dataTypeActions.append(
                     currentS.create().map { dataType in
-                        s = fieldConfig(params.key, params.dataType, constraints)
+                        s.wrapped = fieldConfig(params.key, params.dataType, constraints)
                     }
                 )
             } else {
-                s = fieldConfig(params.key, params.dataType, constraints)
+                s.wrapped = fieldConfig(params.key, params.dataType, constraints)
             }
         }
-        for unique in uniques { s = s.unique(on: unique) }
+        for unique in uniques { s.wrapped = s.wrapped.unique(on: unique) }
         for (name, uniqueGroup) in compositeUniques {
             switch uniqueGroup.count {
             case 0: break
-            case 1: s = s.unique(on: uniqueGroup[0], name: name)
-            case 2: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], name: name)
-            case 3: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], name: name)
-            case 4: s = s.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], uniqueGroup[3], name: name)
+            case 1: s.wrapped = s.wrapped.unique(on: uniqueGroup[0], name: name)
+            case 2: s.wrapped = s.wrapped.unique(on: uniqueGroup[0], uniqueGroup[1], name: name)
+            case 3: s.wrapped = s.wrapped.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], name: name)
+            case 4: s.wrapped = s.wrapped.unique(on: uniqueGroup[0], uniqueGroup[1], uniqueGroup[2], uniqueGroup[3], name: name)
             default: fatalError("暂不支持多于 4 字段的复合唯一约束")
             }
         }
         if primarys.count > 0 {
             let primaryConstraint = "PRIMARY KEY (\"\(primarys.joined(separator: "\", \""))\")"
-            s = s.constraint(.custom(primaryConstraint))
+            s.wrapped = s.wrapped.constraint(.custom(primaryConstraint))
         }
         
-        s = migrating(with: s)
+        s.wrapped = migrating(with: s.wrapped)
         
         return dataTypeActions.flatten(on: database.eventLoop).flatMap {
-            s.create().flatMap {
+            s.wrapped.create().flatMap {
                 guard encrypt == true else { return database.eventLoop.makeSucceededVoidFuture() }
                 guard let db = database as? PostgresDatabase else { return database.eventLoop.future(error: PgErr.dataBaseError.d("数据库类型不是 PostgreSQL")) }
                 return db.query("ALTER TABLE \(name) SET ACCESS METHOD tde_heap;").flatMapError { err in
@@ -121,5 +122,22 @@ public extension PGMigration {
                 }.transform(to: ())
             }
         }
+    }
+}
+
+@usableFromInline
+class SchemaBuilderWrapper: @unchecked Sendable {
+    @usableFromInline
+    var wrapped: SchemaBuilder {
+        get { lock.withLock { __wrapped } }
+        set { lock.withLock { __wrapped = newValue } }
+    }
+    
+    private var lock = NIOLock()
+    private var __wrapped: SchemaBuilder
+    
+    @usableFromInline
+    init(wrapped: SchemaBuilder) {
+        self.__wrapped = wrapped
     }
 }

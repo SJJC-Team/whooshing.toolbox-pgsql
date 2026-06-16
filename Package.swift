@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/whooshing-workshop/whooshing-fluent.git", from: "1.0.3"),
-        .package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-basic.git", from: "1.5.4"),
+        .package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-basic.git", from: "1.5.10"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.10.0"),
         .package(url: "https://github.com/Flight-School/AnyCodable", from: "0.6.0")
     ],

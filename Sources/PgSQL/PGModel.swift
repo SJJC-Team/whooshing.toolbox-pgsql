@@ -68,7 +68,6 @@ import FluentPostgresDriver
     ```
 */
 public protocol PGModel: Model, Sendable {
-    associatedtype MIG: PGMigration
     associatedtype Fields: PGFields
     /// 表的名称
     static var name: String { get }
