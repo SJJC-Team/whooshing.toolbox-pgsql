@@ -1,10 +1,7 @@
 import Testing
-@testable import PgSQL
-import Foundation
 import Vapor
-import Fluent
-@preconcurrency import FluentPostgresDriver
-import ErrorHandle
+import Foundation
+@testable import PgSQL
 
 @Suite("PostgreSQL 数据定义测试", .serialized)
 struct PGSQLTests {
