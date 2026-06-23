@@ -4,7 +4,7 @@ import NIOAdvanced
 public extension Database {
     /// 使用自定义错误类型封装的事务执行器。
     @inlinable
-    func trans<T, G: Err>(
+    func trans<T: Sendable, G: Err>(
         throws error: G.ErrorList,
         _ explain: String? = nil,
         metadata: Logger.Metadata? = nil,
@@ -26,7 +26,7 @@ public extension Database {
     
     /// 使用自定义错误类型封装的事务执行器。
     @inlinable
-    func trans<T, G>(
+    func trans<T: Sendable, G>(
         throws error: G,
         _ closure: @escaping @Sendable (Self) -> EventLoopResult<T, G>,
     ) -> EventLoopResult<T, G> {

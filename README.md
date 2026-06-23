@@ -17,7 +17,7 @@
 在你的 Package.swift 加入：
 
 ``` swift
-.package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-pgsql.git", from: "1.1.1")
+.package(url: "https://github.com/whooshing-workshop/whooshing.toolbox-pgsql.git", from: "1.1.2")
 ```
 
 在依赖模块中引入:
